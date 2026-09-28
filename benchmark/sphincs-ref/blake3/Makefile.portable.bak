@@ -1,0 +1,101 @@
+# Makefile: SPHINCS+ reference implementation built with BLAKE3 as the hash
+# function.
+#
+# This build is fully self-contained in the blake3/ directory.  No file inside
+# the upstream git repository (../ref) is modified: the shared SPHINCS+
+# sources are compiled directly from ../ref, while the BLAKE3 hash
+# instantiations (hash_blake3.c, thash_blake3_*.c) and the BLAKE3 library
+# itself live in ./ref.
+#
+# The hash function is selected by the Makefile (exactly like the upstream
+# ref/Makefile selects sha2/shake/haraka via the PARAMS name): here BLAKE3 is
+# always used.  PARAMS only selects the SPHINCS+ parameter set, which for the
+# BLAKE3 build must use the full 32-byte address layout, i.e. the
+# sphincs-shake-* parameter headers (they pull in ../ref/shake_offsets.h).
+#
+# Usage:
+#   make PARAMS=sphincs-shake-128f all            # tests + KAT + benchmark
+#   make PARAMS=sphincs-shake-128f test           # run SPHINCS+ self-tests
+#   make PARAMS=sphincs-shake-256f THASH=robust test
+#   make blake3_test                              # BLAKE3 primitive self-test
+#   make PQCgenKAT_sign                           # NIST KAT generator (-lcrypto)
+#
+# BLAKE3 is compiled in portable mode (no SIMD) via the BLAKE3_NO_* defines.
+# To enable SIMD dispatch, drop those defines and add the corresponding
+# blake3_sse2/sse41/avx2/avx512.c sources; see BLAKE3_SPHINCS_INTEGRATION.md.
+
+PARAMS = sphincs-shake-128f
+THASH  = simple
+
+REFDIR = ../ref
+
+CC     = gcc
+CFLAGS = -Wall -Wextra -Wpedantic -O3 -std=c99 -Wconversion -Wmissing-prototypes \
+         -DPARAMS=$(PARAMS) \
+         -DBLAKE3_NO_SSE2 -DBLAKE3_NO_SSE41 -DBLAKE3_NO_AVX2 -DBLAKE3_NO_AVX512 \
+         -I$(REFDIR) -Iref \
+         $(EXTRA_CFLAGS)
+
+LDLIBS =
+
+# Shared SPHINCS+ sources (from the unmodified upstream tree).
+SOURCES = $(REFDIR)/address.c $(REFDIR)/randombytes.c $(REFDIR)/merkle.c \
+          $(REFDIR)/wots.c $(REFDIR)/wotsx1.c $(REFDIR)/utils.c \
+          $(REFDIR)/utilsx1.c $(REFDIR)/fors.c $(REFDIR)/sign.c
+
+# BLAKE3 hash instantiations plus the BLAKE3 library itself.
+SOURCES += ref/hash_blake3.c ref/thash_blake3_$(THASH).c \
+           ref/blake3.c ref/blake3_portable.c ref/blake3_dispatch.c
+
+HEADERS = $(REFDIR)/params.h $(REFDIR)/address.h $(REFDIR)/randombytes.h \
+          $(REFDIR)/merkle.h $(REFDIR)/wots.h $(REFDIR)/wotsx1.h \
+          $(REFDIR)/utils.h $(REFDIR)/utilsx1.h $(REFDIR)/fors.h \
+          $(REFDIR)/api.h $(REFDIR)/hash.h $(REFDIR)/thash.h \
+          ref/blake3.h ref/blake3_impl.h
+
+# Deterministic variant of the sources (randombytes.c -> rng.c) for the NIST
+# KAT generator, exactly as in the upstream ref/Makefile.
+DET_SOURCES = $(SOURCES:$(REFDIR)/randombytes.c=$(REFDIR)/rng.c)
+
+# BLAKE3-library-only sources, used by the standalone primitive self-test.
+BLAKE3_SOURCES = ref/blake3.c ref/blake3_portable.c ref/blake3_dispatch.c
+
+TESTS      = test_spx test_fors
+BENCH_BIN  = bench_spx
+
+.PHONY: all test tests benchmark clean
+
+all: $(TESTS) $(BENCH_BIN) blake3_test
+
+tests: $(TESTS)
+
+test: $(TESTS)
+	@./test_spx
+	@./test_fors
+
+benchmark: $(BENCH_BIN)
+	@./$(BENCH_BIN)
+
+# SPHINCS+ self-tests (keygen / sign / verify roundtrips through BLAKE3).
+test_spx: $(REFDIR)/test/spx.c $(SOURCES) $(HEADERS)
+	$(CC) $(CFLAGS) -o $@ $(SOURCES) $<
+
+test_fors: $(REFDIR)/test/fors.c $(SOURCES) $(HEADERS)
+	$(CC) $(CFLAGS) -o $@ $(SOURCES) $<
+
+$(BENCH_BIN): $(REFDIR)/test/benchmark.c $(REFDIR)/test/cycles.c $(SOURCES) $(HEADERS)
+	$(CC) $(CFLAGS) -o $@ $(REFDIR)/test/cycles.c $(SOURCES) $< $(LDLIBS)
+
+# NIST KAT generator (uses rng.c, requires the OpenSSL dev headers for
+# AES256-CTR-DRBG).  Not part of `all`: it needs libssl-dev installed.
+PQCgenKAT_sign: $(REFDIR)/PQCgenKAT_sign.c $(DET_SOURCES)
+	$(CC) $(CFLAGS) -o $@ $(DET_SOURCES) $< -lcrypto
+
+# Standalone BLAKE3 primitive self-test against the official test vectors
+# (test_vectors.json shipped in this directory).
+blake3_test: test/blake3_test.c $(BLAKE3_SOURCES) ref/blake3.h
+	$(CC) $(CFLAGS) -o $@ $(BLAKE3_SOURCES) $<
+
+clean:
+	-$(RM) $(TESTS) $(BENCH_BIN) PQCgenKAT_sign blake3_test
+	-$(RM) PQCsignKAT_*.req PQCsignKAT_*.rsp
