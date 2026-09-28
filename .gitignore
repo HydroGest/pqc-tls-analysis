@@ -1,0 +1,23 @@
+# 编译产物
+*.o
+*.a
+pqc-judge
+test_judge
+__pycache__/
+benchmark/logs/
+
+# 大体积公开数据（需要时另行下载）
+trust_store_data/ccadb_v5.csv
+
+# Python
+.venv/
+venv*/
+*.py[cod]
+
+# Logs
+*.log.old
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

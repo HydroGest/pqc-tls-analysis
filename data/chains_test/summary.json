@@ -1,0 +1,333 @@
+{
+  "start": "2026-09-20T02:17:02.918112",
+  "total": 10,
+  "ok": 10,
+  "refused": 0,
+  "timeout": 0,
+  "no_cert": 0,
+  "error": 0,
+  "targets": [
+    {
+      "domain": "qq.com",
+      "status": "ok",
+      "verify": "OK"
+    },
+    {
+      "domain": "163.com",
+      "status": "ok",
+      "verify": "OK"
+    },
+    {
+      "domain": "sohu.com",
+      "status": "ok",
+      "verify": "OK"
+    },
+    {
+      "domain": "baidu.com",
+      "status": "ok",
+      "verify": "OK"
+    },
+    {
+      "domain": "eastmoney.com",
+      "status": "ok",
+      "verify": "OK"
+    },
+    {
+      "domain": "sogou.com",
+      "status": "ok",
+      "verify": "OK"
+    },
+    {
+      "domain": "so.com",
+      "status": "ok",
+      "verify": "OK"
+    },
+    {
+      "domain": "bilibili.com",
+      "status": "ok",
+      "verify": "OK"
+    },
+    {
+      "domain": "weibo.com",
+      "status": "ok",
+      "verify": "OK"
+    },
+    {
+      "domain": "iqiyi.com",
+      "status": "ok",
+      "verify": "OK"
+    }
+  ],
+  "end": "2026-09-20T02:17:04.042647",
+  "chain_stats": [
+    {
+      "domain": "qq.com",
+      "chain_length": 2,
+      "verify": "OK",
+      "pem": "data/chains_test/pem/qq.com.pem",
+      "cert_subjects": [
+        {
+          "idx": 0,
+          "subject": "C = CN, ST = Guangdong Province, L = Shenzhen, O = Shenzhen Tencent Computer Systems Company Limited, CN = qq.com",
+          "issuer": "C = US, O = \"DigiCert, Inc.\", CN = DigiCert Secure Site OV G2 TLS CN RSA4096 SHA256 2022 CA1",
+          "pk_algo": "rsaEncryption",
+          "sig_algo": "sha256WithRSAEncryption"
+        },
+        {
+          "idx": 1,
+          "subject": "C = US, O = \"DigiCert, Inc.\", CN = DigiCert Secure Site OV G2 TLS CN RSA4096 SHA256 2022 CA1",
+          "issuer": "C = US, O = DigiCert Inc, OU = www.digicert.com, CN = DigiCert Global Root G2",
+          "pk_algo": "rsaEncryption",
+          "sig_algo": "sha256WithRSAEncryption"
+        }
+      ]
+    },
+    {
+      "domain": "163.com",
+      "chain_length": 3,
+      "verify": "OK",
+      "pem": "data/chains_test/pem/163.com.pem",
+      "cert_subjects": [
+        {
+          "idx": 0,
+          "subject": "C = CN, ST = Zhejiang, L = Hangzhou, O = \"NetEase (Hangzhou) Network Co., Ltd\", CN = *.163.com",
+          "issuer": "C = US, O = \"DigiCert, Inc.\", CN = GeoTrust G2 TLS CN RSA4096 SHA256 2022 CA1",
+          "pk_algo": "rsaEncryption",
+          "sig_algo": "sha256WithRSAEncryption"
+        },
+        {
+          "idx": 1,
+          "subject": "C = US, O = \"DigiCert, Inc.\", CN = GeoTrust G2 TLS CN RSA4096 SHA256 2022 CA1",
+          "issuer": "C = US, O = DigiCert Inc, OU = www.digicert.com, CN = DigiCert Global Root G2",
+          "pk_algo": "rsaEncryption",
+          "sig_algo": "sha256WithRSAEncryption"
+        },
+        {
+          "idx": 2,
+          "subject": "C = US, O = DigiCert Inc, OU = www.digicert.com, CN = DigiCert Global Root G2",
+          "issuer": "C = US, O = DigiCert Inc, OU = www.digicert.com, CN = DigiCert Global Root CA",
+          "pk_algo": "rsaEncryption",
+          "sig_algo": "sha256WithRSAEncryption"
+        }
+      ]
+    },
+    {
+      "domain": "sohu.com",
+      "chain_length": 2,
+      "verify": "OK",
+      "pem": "data/chains_test/pem/sohu.com.pem",
+      "cert_subjects": [
+        {
+          "idx": 0,
+          "subject": "C = CN, ST = \\E5\\8C\\97\\E4\\BA\\AC\\E5\\B8\\82, O = \\E5\\8C\\97\\E4\\BA\\AC\\E6\\90\\9C\\E7\\8B\\90\\E6\\96\\B0\\E5\\AA\\92\\E4\\BD\\93\\E4\\BF\\A1\\E6\\81\\AF\\E6\\8A\\80\\E6\\9C\\AF\\E6\\9C\\89\\E9\\99\\90\\E5\\85\\AC\\E5\\8F\\B8, CN = *.sohu.com",
+          "issuer": "C = US, O = \"DigiCert, Inc.\", CN = DigiCert Secure Site OV G2 TLS CN RSA4096 SHA256 2022 CA1",
+          "pk_algo": "rsaEncryption",
+          "sig_algo": "sha256WithRSAEncryption"
+        },
+        {
+          "idx": 1,
+          "subject": "C = US, O = \"DigiCert, Inc.\", CN = DigiCert Secure Site OV G2 TLS CN RSA4096 SHA256 2022 CA1",
+          "issuer": "C = US, O = DigiCert Inc, OU = www.digicert.com, CN = DigiCert Global Root G2",
+          "pk_algo": "rsaEncryption",
+          "sig_algo": "sha256WithRSAEncryption"
+        }
+      ]
+    },
+    {
+      "domain": "baidu.com",
+      "chain_length": 3,
+      "verify": "OK",
+      "pem": "data/chains_test/pem/baidu.com.pem",
+      "cert_subjects": [
+        {
+          "idx": 0,
+          "subject": "C = CN, ST = Beijing, L = Beijing, O = \"Beijing Baidu Netcom Science Technology Co., Ltd.\", CN = baidu.com",
+          "issuer": "C = BE, O = GlobalSign nv-sa, CN = GlobalSign RSA OV SSL CA 2018",
+          "pk_algo": "rsaEncryption",
+          "sig_algo": "sha256WithRSAEncryption"
+        },
+        {
+          "idx": 1,
+          "subject": "C = BE, O = GlobalSign nv-sa, CN = GlobalSign RSA OV SSL CA 2018",
+          "issuer": "OU = GlobalSign Root CA - R3, O = GlobalSign, CN = GlobalSign",
+          "pk_algo": "rsaEncryption",
+          "sig_algo": "sha256WithRSAEncryption"
+        },
+        {
+          "idx": 2,
+          "subject": "OU = GlobalSign Root CA - R3, O = GlobalSign, CN = GlobalSign",
+          "issuer": "C = BE, O = GlobalSign nv-sa, OU = Root CA, CN = GlobalSign Root CA",
+          "pk_algo": "rsaEncryption",
+          "sig_algo": "sha256WithRSAEncryption"
+        }
+      ]
+    },
+    {
+      "domain": "eastmoney.com",
+      "chain_length": 3,
+      "verify": "OK",
+      "pem": "data/chains_test/pem/eastmoney.com.pem",
+      "cert_subjects": [
+        {
+          "idx": 0,
+          "subject": "C = CN, ST = Shanghai, O = \"East Money Information Co., Ltd.\", CN = *.eastmoney.com",
+          "issuer": "C = US, O = \"DigiCert, Inc.\", CN = GeoTrust G2 TLS CN RSA4096 SHA256 2022 CA1",
+          "pk_algo": "rsaEncryption",
+          "sig_algo": "sha256WithRSAEncryption"
+        },
+        {
+          "idx": 1,
+          "subject": "C = US, O = \"DigiCert, Inc.\", CN = GeoTrust G2 TLS CN RSA4096 SHA256 2022 CA1",
+          "issuer": "C = US, O = DigiCert Inc, OU = www.digicert.com, CN = DigiCert Global Root G2",
+          "pk_algo": "rsaEncryption",
+          "sig_algo": "sha256WithRSAEncryption"
+        },
+        {
+          "idx": 2,
+          "subject": "C = US, O = DigiCert Inc, OU = www.digicert.com, CN = DigiCert Global Root G2",
+          "issuer": "C = US, O = DigiCert Inc, OU = www.digicert.com, CN = DigiCert Global Root CA",
+          "pk_algo": "rsaEncryption",
+          "sig_algo": "sha256WithRSAEncryption"
+        }
+      ]
+    },
+    {
+      "domain": "sogou.com",
+      "chain_length": 2,
+      "verify": "OK",
+      "pem": "data/chains_test/pem/sogou.com.pem",
+      "cert_subjects": [
+        {
+          "idx": 0,
+          "subject": "C = CN, ST = Guangdong Province, L = Shenzhen, O = Shenzhen Tencent Computer Systems Company Limited, CN = *.sogou.com",
+          "issuer": "C = US, O = \"DigiCert, Inc.\", CN = DigiCert Secure Site OV G2 TLS CN RSA4096 SHA256 2022 CA1",
+          "pk_algo": "rsaEncryption",
+          "sig_algo": "sha256WithRSAEncryption"
+        },
+        {
+          "idx": 1,
+          "subject": "C = US, O = \"DigiCert, Inc.\", CN = DigiCert Secure Site OV G2 TLS CN RSA4096 SHA256 2022 CA1",
+          "issuer": "C = US, O = DigiCert Inc, OU = www.digicert.com, CN = DigiCert Global Root G2",
+          "pk_algo": "rsaEncryption",
+          "sig_algo": "sha256WithRSAEncryption"
+        }
+      ]
+    },
+    {
+      "domain": "so.com",
+      "chain_length": 3,
+      "verify": "OK",
+      "pem": "data/chains_test/pem/so.com.pem",
+      "cert_subjects": [
+        {
+          "idx": 0,
+          "subject": "CN = *.so.com",
+          "issuer": "C = CN, O = WoTrus CA Limited, CN = WoTrus RSA DV SSL CA 2",
+          "pk_algo": "rsaEncryption",
+          "sig_algo": "sha256WithRSAEncryption"
+        },
+        {
+          "idx": 1,
+          "subject": "C = CN, O = WoTrus CA Limited, CN = WoTrus RSA DV SSL CA 2",
+          "issuer": "C = GB, O = Sectigo Limited, CN = Sectigo Public Server Authentication Root R46",
+          "pk_algo": "rsaEncryption",
+          "sig_algo": "sha384WithRSAEncryption"
+        },
+        {
+          "idx": 2,
+          "subject": "C = GB, O = Sectigo Limited, CN = Sectigo Public Server Authentication Root R46",
+          "issuer": "C = US, ST = New Jersey, L = Jersey City, O = The USERTRUST Network, CN = USERTrust RSA Certification Authority",
+          "pk_algo": "rsaEncryption",
+          "sig_algo": "sha384WithRSAEncryption"
+        }
+      ]
+    },
+    {
+      "domain": "bilibili.com",
+      "chain_length": 3,
+      "verify": "OK",
+      "pem": "data/chains_test/pem/bilibili.com.pem",
+      "cert_subjects": [
+        {
+          "idx": 0,
+          "subject": "C = CN, ST = \\E4\\B8\\8A\\E6\\B5\\B7, L = \\E4\\B8\\8A\\E6\\B5\\B7, O = \\E4\\B8\\8A\\E6\\B5\\B7\\E5\\B9\\BB\\E7\\94\\B5\\E4\\BF\\A1\\E6\\81\\AF\\E7\\A7\\91\\E6\\8A\\80\\E6\\9C\\89\\E9\\99\\90\\E5\\85\\AC\\E5\\8F\\B8, CN = *.bilibili.com",
+          "issuer": "C = BE, O = GlobalSign nv-sa, CN = GlobalSign RSA OV SSL CA 2018",
+          "pk_algo": "rsaEncryption",
+          "sig_algo": "sha256WithRSAEncryption"
+        },
+        {
+          "idx": 1,
+          "subject": "C = BE, O = GlobalSign nv-sa, CN = GlobalSign RSA OV SSL CA 2018",
+          "issuer": "OU = GlobalSign Root CA - R3, O = GlobalSign, CN = GlobalSign",
+          "pk_algo": "rsaEncryption",
+          "sig_algo": "sha256WithRSAEncryption"
+        },
+        {
+          "idx": 2,
+          "subject": "OU = GlobalSign Root CA - R3, O = GlobalSign, CN = GlobalSign",
+          "issuer": "C = BE, O = GlobalSign nv-sa, OU = Root CA, CN = GlobalSign Root CA",
+          "pk_algo": "rsaEncryption",
+          "sig_algo": "sha256WithRSAEncryption"
+        }
+      ]
+    },
+    {
+      "domain": "weibo.com",
+      "chain_length": 3,
+      "verify": "OK",
+      "pem": "data/chains_test/pem/weibo.com.pem",
+      "cert_subjects": [
+        {
+          "idx": 0,
+          "subject": "C = CN, ST = Beijing, O = \"Sina.com Technology (China) Co.,ltd\", CN = weibo.cn",
+          "issuer": "C = US, O = \"DigiCert, Inc.\", CN = GeoTrust G2 TLS CN RSA4096 SHA256 2022 CA1",
+          "pk_algo": "id-ecPublicKey",
+          "sig_algo": "sha256WithRSAEncryption"
+        },
+        {
+          "idx": 1,
+          "subject": "C = US, O = \"DigiCert, Inc.\", CN = GeoTrust G2 TLS CN RSA4096 SHA256 2022 CA1",
+          "issuer": "C = US, O = DigiCert Inc, OU = www.digicert.com, CN = DigiCert Global Root G2",
+          "pk_algo": "rsaEncryption",
+          "sig_algo": "sha256WithRSAEncryption"
+        },
+        {
+          "idx": 2,
+          "subject": "C = US, O = DigiCert Inc, OU = www.digicert.com, CN = DigiCert Global Root G2",
+          "issuer": "C = US, O = DigiCert Inc, OU = www.digicert.com, CN = DigiCert Global Root CA",
+          "pk_algo": "rsaEncryption",
+          "sig_algo": "sha256WithRSAEncryption"
+        }
+      ]
+    },
+    {
+      "domain": "iqiyi.com",
+      "chain_length": 3,
+      "verify": "OK",
+      "pem": "data/chains_test/pem/iqiyi.com.pem",
+      "cert_subjects": [
+        {
+          "idx": 0,
+          "subject": "C = CN, ST = Beijing, L = Beijing, O = \"Beijing IQIYI Science & Technology Co., Ltd.\", CN = *.iqiyi.com",
+          "issuer": "C = BE, O = GlobalSign nv-sa, CN = GlobalSign RSA OV SSL CA 2018",
+          "pk_algo": "rsaEncryption",
+          "sig_algo": "sha256WithRSAEncryption"
+        },
+        {
+          "idx": 1,
+          "subject": "C = BE, O = GlobalSign nv-sa, CN = GlobalSign RSA OV SSL CA 2018",
+          "issuer": "OU = GlobalSign Root CA - R3, O = GlobalSign, CN = GlobalSign",
+          "pk_algo": "rsaEncryption",
+          "sig_algo": "sha256WithRSAEncryption"
+        },
+        {
+          "idx": 2,
+          "subject": "OU = GlobalSign Root CA - R3, O = GlobalSign, CN = GlobalSign",
+          "issuer": "C = BE, O = GlobalSign nv-sa, OU = Root CA, CN = GlobalSign Root CA",
+          "pk_algo": "rsaEncryption",
+          "sig_algo": "sha256WithRSAEncryption"
+        }
+      ]
+    }
+  ]
+}

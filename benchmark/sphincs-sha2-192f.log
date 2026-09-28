@@ -1,0 +1,158 @@
+/usr/bin/gcc -Wall -Wextra -Wpedantic -O3 -std=c99 -Wconversion -Wmissing-prototypes -DPARAMS=sphincs-sha2-192f  -o test/benchmark test/cycles.c address.c randombytes.c merkle.c wots.c wotsx1.c utils.c utilsx1.c fors.c sign.c sha2.c hash_sha2.c thash_sha2_robust.c test/benchmark.c 
+sha2.c: In function ‘crypto_hashblocks_sha512’:
+sha2.c:454:10: warning: conversion from ‘long long unsigned int’ to ‘int’ may change value [-Wconversion]
+  454 |   return inlen;
+      |          ^~~~~
+sha2.c: In function ‘SPX_mgf1_256’:
+sha2.c:638:37: warning: conversion from ‘long unsigned int’ to ‘uint32_t’ {aka ‘unsigned int’} may change value [-Wconversion]
+  638 |         u32_to_bytes(inbuf + inlen, i);
+      |                                     ^
+sha2.c:644:37: warning: conversion from ‘long unsigned int’ to ‘uint32_t’ {aka ‘unsigned int’} may change value [-Wconversion]
+  644 |         u32_to_bytes(inbuf + inlen, i);
+      |                                     ^
+sha2.c: In function ‘SPX_mgf1_512’:
+sha2.c:664:37: warning: conversion from ‘long unsigned int’ to ‘uint32_t’ {aka ‘unsigned int’} may change value [-Wconversion]
+  664 |         u32_to_bytes(inbuf + inlen, i);
+      |                                     ^
+sha2.c:670:37: warning: conversion from ‘long unsigned int’ to ‘uint32_t’ {aka ‘unsigned int’} may change value [-Wconversion]
+  670 |         u32_to_bytes(inbuf + inlen, i);
+      |                                     ^
+test/benchmark.c: In function ‘main’:
+test/benchmark.c:95:44: warning: conversion from ‘__time_t’ {aka ‘long int’} to ‘double’ may change value [-Wconversion]
+   95 |     result = ((stop.tv_sec - start.tv_sec) * 1e6 + \
+      |                                            ^
+test/benchmark.c:99:5: note: in expansion of macro ‘MEASURE_GENERIC’
+   99 |     MEASURE_GENERIC(\
+      |     ^~~~~~~~~~~~~~~
+test/benchmark.c:147:5: note: in expansion of macro ‘MEASURT’
+  147 |     MEASURT("thash                ", 1, thash(block, block, 1, &ctx, (uint32_t*)addr));
+      |     ^~~~~~~
+test/benchmark.c:96:40: warning: conversion from ‘__syscall_slong_t’ {aka ‘long int’} to ‘double’ may change value [-Wconversion]
+   96 |         (stop.tv_nsec - start.tv_nsec) / 1e3) / (double)CORR;\
+      |                                        ^
+test/benchmark.c:99:5: note: in expansion of macro ‘MEASURE_GENERIC’
+   99 |     MEASURE_GENERIC(\
+      |     ^~~~~~~~~~~~~~~
+test/benchmark.c:147:5: note: in expansion of macro ‘MEASURT’
+  147 |     MEASURT("thash                ", 1, thash(block, block, 1, &ctx, (uint32_t*)addr));
+      |     ^~~~~~~
+test/benchmark.c:95:44: warning: conversion from ‘__time_t’ {aka ‘long int’} to ‘double’ may change value [-Wconversion]
+   95 |     result = ((stop.tv_sec - start.tv_sec) * 1e6 + \
+      |                                            ^
+test/benchmark.c:107:36: note: in expansion of macro ‘MEASURE_GENERIC’
+  107 | #define MEASURE(TEXT, MUL, FNCALL) MEASURE_GENERIC(TEXT, MUL, FNCALL, 1)
+      |                                    ^~~~~~~~~~~~~~~
+test/benchmark.c:148:5: note: in expansion of macro ‘MEASURE’
+  148 |     MEASURE("Generating keypair.. ", 1, crypto_sign_keypair(pk, sk));
+      |     ^~~~~~~
+test/benchmark.c:96:40: warning: conversion from ‘__syscall_slong_t’ {aka ‘long int’} to ‘double’ may change value [-Wconversion]
+   96 |         (stop.tv_nsec - start.tv_nsec) / 1e3) / (double)CORR;\
+      |                                        ^
+test/benchmark.c:107:36: note: in expansion of macro ‘MEASURE_GENERIC’
+  107 | #define MEASURE(TEXT, MUL, FNCALL) MEASURE_GENERIC(TEXT, MUL, FNCALL, 1)
+      |                                    ^~~~~~~~~~~~~~~
+test/benchmark.c:148:5: note: in expansion of macro ‘MEASURE’
+  148 |     MEASURE("Generating keypair.. ", 1, crypto_sign_keypair(pk, sk));
+      |     ^~~~~~~
+test/benchmark.c:95:44: warning: conversion from ‘__time_t’ {aka ‘long int’} to ‘double’ may change value [-Wconversion]
+   95 |     result = ((stop.tv_sec - start.tv_sec) * 1e6 + \
+      |                                            ^
+test/benchmark.c:107:36: note: in expansion of macro ‘MEASURE_GENERIC’
+  107 | #define MEASURE(TEXT, MUL, FNCALL) MEASURE_GENERIC(TEXT, MUL, FNCALL, 1)
+      |                                    ^~~~~~~~~~~~~~~
+test/benchmark.c:149:5: note: in expansion of macro ‘MEASURE’
+  149 |     MEASURE("  - WOTS pk gen..    ", (1 << SPX_TREE_HEIGHT), wots_gen_pkx1(wots_pk, &ctx, (uint32_t *) addr));
+      |     ^~~~~~~
+test/benchmark.c:96:40: warning: conversion from ‘__syscall_slong_t’ {aka ‘long int’} to ‘double’ may change value [-Wconversion]
+   96 |         (stop.tv_nsec - start.tv_nsec) / 1e3) / (double)CORR;\
+      |                                        ^
+test/benchmark.c:107:36: note: in expansion of macro ‘MEASURE_GENERIC’
+  107 | #define MEASURE(TEXT, MUL, FNCALL) MEASURE_GENERIC(TEXT, MUL, FNCALL, 1)
+      |                                    ^~~~~~~~~~~~~~~
+test/benchmark.c:149:5: note: in expansion of macro ‘MEASURE’
+  149 |     MEASURE("  - WOTS pk gen..    ", (1 << SPX_TREE_HEIGHT), wots_gen_pkx1(wots_pk, &ctx, (uint32_t *) addr));
+      |     ^~~~~~~
+test/benchmark.c:95:44: warning: conversion from ‘__time_t’ {aka ‘long int’} to ‘double’ may change value [-Wconversion]
+   95 |     result = ((stop.tv_sec - start.tv_sec) * 1e6 + \
+      |                                            ^
+test/benchmark.c:107:36: note: in expansion of macro ‘MEASURE_GENERIC’
+  107 | #define MEASURE(TEXT, MUL, FNCALL) MEASURE_GENERIC(TEXT, MUL, FNCALL, 1)
+      |                                    ^~~~~~~~~~~~~~~
+test/benchmark.c:150:5: note: in expansion of macro ‘MEASURE’
+  150 |     MEASURE("Signing..            ", 1, crypto_sign(sm, &smlen, m, SPX_MLEN, sk));
+      |     ^~~~~~~
+test/benchmark.c:96:40: warning: conversion from ‘__syscall_slong_t’ {aka ‘long int’} to ‘double’ may change value [-Wconversion]
+   96 |         (stop.tv_nsec - start.tv_nsec) / 1e3) / (double)CORR;\
+      |                                        ^
+test/benchmark.c:107:36: note: in expansion of macro ‘MEASURE_GENERIC’
+  107 | #define MEASURE(TEXT, MUL, FNCALL) MEASURE_GENERIC(TEXT, MUL, FNCALL, 1)
+      |                                    ^~~~~~~~~~~~~~~
+test/benchmark.c:150:5: note: in expansion of macro ‘MEASURE’
+  150 |     MEASURE("Signing..            ", 1, crypto_sign(sm, &smlen, m, SPX_MLEN, sk));
+      |     ^~~~~~~
+test/benchmark.c:95:44: warning: conversion from ‘__time_t’ {aka ‘long int’} to ‘double’ may change value [-Wconversion]
+   95 |     result = ((stop.tv_sec - start.tv_sec) * 1e6 + \
+      |                                            ^
+test/benchmark.c:107:36: note: in expansion of macro ‘MEASURE_GENERIC’
+  107 | #define MEASURE(TEXT, MUL, FNCALL) MEASURE_GENERIC(TEXT, MUL, FNCALL, 1)
+      |                                    ^~~~~~~~~~~~~~~
+test/benchmark.c:151:5: note: in expansion of macro ‘MEASURE’
+  151 |     MEASURE("  - FORS signing..   ", 1, fors_sign(fors_sig, fors_pk, fors_m, &ctx, (uint32_t *) addr));
+      |     ^~~~~~~
+test/benchmark.c:96:40: warning: conversion from ‘__syscall_slong_t’ {aka ‘long int’} to ‘double’ may change value [-Wconversion]
+   96 |         (stop.tv_nsec - start.tv_nsec) / 1e3) / (double)CORR;\
+      |                                        ^
+test/benchmark.c:107:36: note: in expansion of macro ‘MEASURE_GENERIC’
+  107 | #define MEASURE(TEXT, MUL, FNCALL) MEASURE_GENERIC(TEXT, MUL, FNCALL, 1)
+      |                                    ^~~~~~~~~~~~~~~
+test/benchmark.c:151:5: note: in expansion of macro ‘MEASURE’
+  151 |     MEASURE("  - FORS signing..   ", 1, fors_sign(fors_sig, fors_pk, fors_m, &ctx, (uint32_t *) addr));
+      |     ^~~~~~~
+test/benchmark.c:95:44: warning: conversion from ‘__time_t’ {aka ‘long int’} to ‘double’ may change value [-Wconversion]
+   95 |     result = ((stop.tv_sec - start.tv_sec) * 1e6 + \
+      |                                            ^
+test/benchmark.c:107:36: note: in expansion of macro ‘MEASURE_GENERIC’
+  107 | #define MEASURE(TEXT, MUL, FNCALL) MEASURE_GENERIC(TEXT, MUL, FNCALL, 1)
+      |                                    ^~~~~~~~~~~~~~~
+test/benchmark.c:152:5: note: in expansion of macro ‘MEASURE’
+  152 |     MEASURE("  - WOTS pk gen..    ", SPX_D * (1 << SPX_TREE_HEIGHT), wots_gen_pkx1(wots_pk, &ctx, (uint32_t *) addr));
+      |     ^~~~~~~
+test/benchmark.c:96:40: warning: conversion from ‘__syscall_slong_t’ {aka ‘long int’} to ‘double’ may change value [-Wconversion]
+   96 |         (stop.tv_nsec - start.tv_nsec) / 1e3) / (double)CORR;\
+      |                                        ^
+test/benchmark.c:107:36: note: in expansion of macro ‘MEASURE_GENERIC’
+  107 | #define MEASURE(TEXT, MUL, FNCALL) MEASURE_GENERIC(TEXT, MUL, FNCALL, 1)
+      |                                    ^~~~~~~~~~~~~~~
+test/benchmark.c:152:5: note: in expansion of macro ‘MEASURE’
+  152 |     MEASURE("  - WOTS pk gen..    ", SPX_D * (1 << SPX_TREE_HEIGHT), wots_gen_pkx1(wots_pk, &ctx, (uint32_t *) addr));
+      |     ^~~~~~~
+test/benchmark.c:95:44: warning: conversion from ‘__time_t’ {aka ‘long int’} to ‘double’ may change value [-Wconversion]
+   95 |     result = ((stop.tv_sec - start.tv_sec) * 1e6 + \
+      |                                            ^
+test/benchmark.c:107:36: note: in expansion of macro ‘MEASURE_GENERIC’
+  107 | #define MEASURE(TEXT, MUL, FNCALL) MEASURE_GENERIC(TEXT, MUL, FNCALL, 1)
+      |                                    ^~~~~~~~~~~~~~~
+test/benchmark.c:153:5: note: in expansion of macro ‘MEASURE’
+  153 |     MEASURE("Verifying..          ", 1, crypto_sign_open(mout, &mlen, sm, smlen, pk));
+      |     ^~~~~~~
+test/benchmark.c:96:40: warning: conversion from ‘__syscall_slong_t’ {aka ‘long int’} to ‘double’ may change value [-Wconversion]
+   96 |         (stop.tv_nsec - start.tv_nsec) / 1e3) / (double)CORR;\
+      |                                        ^
+test/benchmark.c:107:36: note: in expansion of macro ‘MEASURE_GENERIC’
+  107 | #define MEASURE(TEXT, MUL, FNCALL) MEASURE_GENERIC(TEXT, MUL, FNCALL, 1)
+      |                                    ^~~~~~~~~~~~~~~
+test/benchmark.c:153:5: note: in expansion of macro ‘MEASURE’
+  153 |     MEASURE("Verifying..          ", 1, crypto_sign_open(mout, &mlen, sm, smlen, pk));
+      |     ^~~~~~~
+Parameters: n = 24, h = 66, d = 22, b = 8, k = 33, w = 16
+Running 10 iterations.
+thash                avg.        0.37 us (0.00 sec); median          1,158 cycles,      1x:          1,158 cycles
+Generating keypair.. avg.     2093.67 us (0.00 sec); median      7,471,218 cycles,      1x:      7,471,218 cycles
+  - WOTS pk gen..    avg.      248.00 us (0.00 sec); median        940,310 cycles,      8x:      7,522,480 cycles
+Signing..            avg.    52675.46 us (0.05 sec); median    199,668,701 cycles,      1x:    199,668,701 cycles
+  - FORS signing..   avg.     8589.24 us (0.01 sec); median     32,574,759 cycles,      1x:     32,574,759 cycles
+  - WOTS pk gen..    avg.      248.96 us (0.00 sec); median        938,391 cycles,    176x:    165,156,816 cycles
+Verifying..          avg.     2953.76 us (0.00 sec); median     11,201,792 cycles,      1x:     11,201,792 cycles
+Signature size: 35664 (34.83 KiB)
+Public key size: 48 (0.05 KiB)
+Secret key size: 96 (0.09 KiB)

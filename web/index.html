@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>证书续费 PQC 升级指南</title>
+
+  <!-- Vuetify 3 CSS -->
+  <link href="https://unpkg.com/vuetify@3/dist/vuetify.min.css" rel="stylesheet" />
+  <!-- Material Design Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7/css/materialdesignicons.min.css" rel="stylesheet" />
+
+  <style>
+    body {
+      background-color: #f5f5f5;
+      font-family: 'Roboto', sans-serif;
+    }
+    .cert-detail pre {
+      white-space: pre-wrap;
+      word-break: break-all;
+      font-size: 0.85rem;
+    }
+    .advice-item {
+      border-left: 3px solid;
+      padding-left: 12px;
+      margin-bottom: 6px;
+    }
+    .nist-timeline-bar {
+      display: flex;
+      height: 24px;
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 12px 0;
+    }
+    .nist-timeline-bar .segment {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 500;
+    }
+    .countdown-number {
+      font-size: 3rem;
+      line-height: 1.1;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+    }
+    .advice-checklist ol {
+      padding-left: 20px;
+      margin: 0;
+    }
+    .advice-checklist li {
+      margin-bottom: 8px;
+    }
+    .footer-text {
+      font-size: 0.85rem;
+      color: rgba(0,0,0,0.6);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <v-app>
+      <!-- App Bar -->
+      <v-app-bar color="primary" density="compact" elevation="2">
+        <template v-slot:prepend>
+          <v-icon class="mr-2">mdi-certificate</v-icon>
+        </template>
+        <v-app-bar-title>证书续费 PQC 升级指南</v-app-bar-title>
+        <template v-slot:append>
+          <v-btn icon variant="text" href="/api/status" target="_blank" title="API 状态">
+            <v-icon>mdi-information-outline</v-icon>
+          </v-btn>
+        </template>
+      </v-app-bar>
+
+      <!-- Main Content -->
+      <v-main>
+        <v-container fluid class="py-4" style="max-width: 960px;">
+          <!-- Input Section -->
+          <v-card class="mb-4" elevation="2">
+            <v-card-item>
+              <v-card-title class="text-h6">
+                <v-icon class="mr-2">mdi-web</v-icon>
+                输入你的网站域名
+              </v-card-title>
+              <v-card-subtitle class="text-body-2 mt-1">
+                输入域名，查看证书到期时间、签发 CA 的 PQC 就绪度与续费建议
+              </v-card-subtitle>
+            </v-card-item>
+            <v-card-text>
+              <v-form @submit.prevent="scan">
+                <v-text-field
+                  v-model="domain"
+                  label="域名（如 baidu.com）"
+                  variant="outlined"
+                  placeholder="example.com"
+                  prepend-inner-icon="mdi-earth"
+                  :append-inner-icon="loading ? '' : 'mdi-magnify'"
+                  @click:append-inner="scan"
+                  :disabled="loading"
+                  :rules="[v => !!v || '请输入域名']"
+                  hide-details="auto"
+                  class="mb-3"
+                ></v-text-field>
+                <v-btn
+                  color="primary"
+                  size="large"
+                  @click="scan"
+                  :loading="loading"
+                  :disabled="!domain"
+                  block
+                >
+                  <v-icon class="mr-2">mdi-shield-search</v-icon>
+                  生成续费指南
+                </v-btn>
+              </v-form>
+            </v-card-text>
+          </v-card>
+
+          <!-- Progress -->
+          <v-progress-linear
+            v-if="loading"
+            indeterminate
+            color="primary"
+            class="mb-4"
+          ></v-progress-linear>
+
+          <!-- Error Alert -->
+          <v-alert
+            v-if="error"
+            type="error"
+            closable
+            @click:close="error = ''"
+            class="mb-4"
+            variant="tonal"
+          >
+            <template v-slot:title>
+              <v-icon class="mr-1">mdi-alert-circle</v-icon>
+              扫描失败
+            </template>
+            {{ error }}
+          </v-alert>
+
+          <!-- Results (only if data exists) -->
+          <template v-if="result && result.status === 'ok'">
+            <!-- 1. 证书概况卡片（一行完事 + 可折叠证书链） -->
+            <v-card class="mb-4" elevation="2">
+              <v-card-item>
+                <v-card-title class="text-h6">
+                  <v-icon class="mr-2">mdi-certificate-outline</v-icon>
+                  证书概况
+                </v-card-title>
+              </v-card-item>
+              <v-card-text>
+                <v-row>
+                  <v-col cols="12" sm="3">
+                    <div class="text-caption text-medium-emphasis">域名</div>
+                    <v-chip color="primary" variant="outlined" label class="mt-1">
+                      <v-icon start>mdi-domain</v-icon>
+                      {{ result.domain }}
+                    </v-chip>
+                  </v-col>
+                  <v-col cols="12" sm="3">
+                    <div class="text-caption text-medium-emphasis">当前算法</div>
+                    <v-chip :color="algoColor((result.cert_overview || {}).algo)" dark label class="mt-1">
+                      {{ (result.cert_overview || {}).algo || '?' }}
+                    </v-chip>
+                  </v-col>
+                  <v-col cols="12" sm="3">
+                    <div class="text-caption text-medium-emphasis">到期日期</div>
+                    <v-chip variant="outlined" label class="mt-1">
+                      <v-icon start>mdi-calendar-expiry</v-icon>
+                      {{ (result.cert_overview || {}).not_after || '?' }}
+                    </v-chip>
+                  </v-col>
+                  <v-col cols="12" sm="3">
+                    <div class="text-caption text-medium-emphasis">距离到期还剩</div>
+                    <v-chip variant="outlined" label class="mt-1">
+                      <v-icon start>mdi-timer-outline</v-icon>
+                      {{ (result.cert_overview || {}).remaining_display || '?' }}
+                    </v-chip>
+                  </v-col>
+                </v-row>
+
+                <!-- 证书链（默认收起） -->
+                <v-expansion-panels variant="accordion" class="mt-3">
+                  <v-expansion-panel>
+                    <v-expansion-panel-title>
+                      <v-icon class="mr-2" size="small">mdi-link-variant</v-icon>
+                      证书链（共 {{ result.chain_length }} 级，点击展开）
+                    </v-expansion-panel-title>
+                    <v-expansion-panel-text>
+                      <v-list density="compact" lines="two">
+                        <v-list-item
+                          v-for="(cert, i) in result.chain"
+                          :key="i"
+                          :title="cert.subject"
+                          :subtitle="`${certLabel(i, result.chain_length)} | ${cert.pk_algo}${cert.key_size ? '-' + cert.key_size : ''} | 到期 ${cert.not_after}`"
+                        >
+                          <template v-slot:prepend>
+                            <v-icon :color="certLabelColor(i, result.chain_length)">
+                              {{ certIcon(i, result.chain_length) }}
+                            </v-icon>
+                          </template>
+                          <template v-slot:append>
+                            <v-chip size="x-small" variant="tonal" :color="nistColor(cert.nist_phase)" label>
+                              {{ cert.nist_label }}
+                            </v-chip>
+                          </template>
+                        </v-list-item>
+                      </v-list>
+                    </v-expansion-panel-text>
+                  </v-expansion-panel>
+                </v-expansion-panels>
+              </v-card-text>
+            </v-card>
+
+            <!-- 2. 核心卡片：续费倒计时 -->
+            <v-card class="mb-4" elevation="2">
+              <v-card-item>
+                <v-card-title class="text-h6">
+                  <v-icon class="mr-2">mdi-timer-sand</v-icon>
+                  续费倒计时
+                </v-card-title>
+              </v-card-item>
+              <v-card-text class="text-center pa-6">
+                <div class="countdown-number" :style="countdownStyle((result.cert_overview || {}).expiry_year)">
+                  {{ (result.cert_overview || {}).remaining_display || '未知' }}
+                </div>
+                <div class="text-body-1 mt-2 text-medium-emphasis">
+                  你的证书将在
+                  <strong>{{ (result.cert_overview || {}).not_after || '?' }}</strong>
+                  到期
+                </div>
+                <v-chip
+                  :color="countdownChip((result.cert_overview || {}).expiry_year)"
+                  dark
+                  label
+                  class="mt-3"
+                >
+                  <v-icon start>mdi-calendar-clock</v-icon>
+                  NIST 阶段：{{ (result.cert_overview || {}).nist_label || '未知' }}
+                </v-chip>
+                <p class="mt-4 text-body-2 mx-auto" style="max-width: 640px;">
+                  {{ countdownSentence(result.cert_overview) }}
+                </p>
+              </v-card-text>
+            </v-card>
+
+            <!-- 3. 核心卡片：你的 CA 的 PQC 就绪度 -->
+            <v-card class="mb-4" elevation="2">
+              <v-card-item>
+                <v-card-title class="text-h6">
+                  <v-icon class="mr-2">mdi-shield-star-outline</v-icon>
+                  你的 CA 的 PQC 就绪度
+                </v-card-title>
+              </v-card-item>
+              <v-card-text v-if="result.ca_pqc_readiness">
+                <div class="d-flex align-center">
+                  <span class="text-h3">{{ pqcStatus(result.ca_pqc_readiness.has_pqc_root).emoji }}</span>
+                  <div class="ml-4">
+                    <v-chip
+                      :color="pqcStatus(result.ca_pqc_readiness.has_pqc_root).color"
+                      dark
+                      label
+                      class="mb-1"
+                    >
+                      {{ pqcStatus(result.ca_pqc_readiness.has_pqc_root).text }}
+                    </v-chip>
+                    <div class="text-body-2 text-medium-emphasis">
+                      签发者：{{ result.ca_pqc_readiness.ca_name }}
+                    </div>
+                  </div>
+                </div>
+                <p class="mt-3 text-body-2">
+                  {{ pqcSentence(result.ca_pqc_readiness) }}
+                </p>
+                <div
+                  v-if="result.ca_pqc_readiness.pqc_detail"
+                  class="text-body-2 text-medium-emphasis mt-1"
+                >
+                  <v-icon size="small" class="mr-1">mdi-information-outline</v-icon>
+                  {{ result.ca_pqc_readiness.pqc_detail }}
+                </div>
+
+                <!-- 中国 CA 国密双轨说明 -->
+                <v-alert
+                  v-if="result.ca_pqc_readiness.is_china_ca"
+                  type="info"
+                  density="compact"
+                  variant="tonal"
+                  class="mt-3"
+                >
+                  <template v-slot:title>
+                    <v-icon class="mr-1">mdi-book-open-variant</v-icon>
+                    国密双轨说明
+                  </template>
+                  <span class="text-caption">
+                    该 CA 属于中国 CA（国密双轨体系）。若贵司有等保 / 关基合规要求，
+                    请同步关注 GM/T 0126-2024 与国密 PQC 双轨进展。
+                    <span v-if="result.ca_pqc_readiness.china_detail">（{{ result.ca_pqc_readiness.china_detail }}）</span>
+                  </span>
+                </v-alert>
+              </v-card-text>
+            </v-card>
+
+            <!-- 4. 核心卡片：续费建议（最核心输出） -->
+            <v-card class="mb-4" elevation="2">
+              <v-card-item>
+                <v-card-title class="text-h6">
+                  <v-icon class="mr-2">mdi-clipboard-text-clock-outline</v-icon>
+                  📋 你的续费建议清单
+                </v-card-title>
+              </v-card-item>
+              <v-card-text v-if="result.renewal_advice">
+                <v-alert
+                  :color="urgencyInfo(result.renewal_advice).color"
+                  variant="tonal"
+                  density="compact"
+                  class="mb-3"
+                >
+                  <template v-slot:title>
+                    <v-icon class="mr-1">{{ urgencyInfo(result.renewal_advice).icon }}</v-icon>
+                    {{ urgencyInfo(result.renewal_advice).title }}
+                  </template>
+                  {{ result.renewal_advice.summary }}
+                </v-alert>
+
+                <div class="text-body-2">
+                  <div class="mb-1">
+                    <v-icon size="small" color="success" class="mr-1">mdi-check-circle</v-icon>
+                    当前证书到期：{{ expiryYearMonth((result.cert_overview || {}).not_after) }}
+                    <span v-if="result.renewal_advice.remaining_display">（距今约 {{ result.renewal_advice.remaining_display }}）</span>
+                  </div>
+                  <div>
+                    <v-icon size="small" color="success" class="mr-1">mdi-check-circle</v-icon>
+                    NIST 阶段：{{ (result.renewal_advice || {}).nist_line || nistLine(result.overall_nist) }}
+                  </div>
+                </div>
+
+                <v-divider class="my-3"></v-divider>
+
+                <div class="text-subtitle-1 font-weight-medium mb-2">
+                  <v-icon size="small" class="mr-1">mdi-lightbulb-on-outline</v-icon>
+                  建议：
+                </div>
+                <div class="advice-checklist">
+                  <ol>
+                    <li v-for="(item, i) in result.renewal_advice.items" :key="i">
+                      <span class="text-body-2">{{ item }}</span>
+                    </li>
+                  </ol>
+                </div>
+              </v-card-text>
+            </v-card>
+
+            <!-- 5. 信任库验证卡片（折叠，默认收起） -->
+            <v-expansion-panels variant="accordion" class="mb-4">
+              <v-expansion-panel>
+                <v-expansion-panel-title>
+                  <v-icon class="mr-2">mdi-store-search</v-icon>
+                  信任库验证：你的 CA 在 Mozilla / Chrome / MS 中的状态
+                </v-expansion-panel-title>
+                <v-expansion-panel-text>
+                  <div v-if="result.ca_pqc_readiness" class="mb-2">
+                    <div class="text-caption text-medium-emphasis mb-1">
+                      {{ result.ca_pqc_readiness.ca_name }} 信任状态
+                    </div>
+                    <v-row class="text-caption">
+                      <v-col cols="4">
+                        <v-icon size="small" class="mr-1">mdi-firefox</v-icon> Mozilla
+                        <v-chip size="x-small" variant="tonal" class="ml-1" label>
+                          {{ trustStatusLabel(result.ca_pqc_readiness.moz_status) }}
+                        </v-chip>
+                      </v-col>
+                      <v-col cols="4">
+                        <v-icon size="small" class="mr-1">mdi-google-chrome</v-icon> Chrome
+                        <v-chip size="x-small" variant="tonal" class="ml-1" label>
+                          {{ trustStatusLabel(result.ca_pqc_readiness.chrome_status) }}
+                        </v-chip>
+                      </v-col>
+                      <v-col cols="4">
+                        <v-icon size="small" class="mr-1">mdi-microsoft-windows</v-icon> MS
+                        <v-chip size="x-small" variant="tonal" class="ml-1" label>
+                          {{ trustStatusLabel(result.ca_pqc_readiness.ms_status) }}
+                        </v-chip>
+                      </v-col>
+                    </v-row>
+                    <v-alert
+                      v-if="result.ca_pqc_readiness.is_china_ca"
+                      type="info"
+                      density="compact"
+                      variant="tonal"
+                      class="mt-2"
+                    >
+                      <template v-slot:title>
+                        <v-icon class="mr-1">mdi-flag-variant</v-icon>
+                        国密双轨状态
+                      </template>
+                      <span class="text-caption">
+                        中国 CA 通常同时运营国密（SM2）与国际（RSA/ECC）双轨证书体系，
+                        国际信任库状态仅反映其国际根证书。
+                        <span v-if="result.ca_pqc_readiness.china_detail">（{{ result.ca_pqc_readiness.china_detail }}）</span>
+                      </span>
+                    </v-alert>
+                  </div>
+
+                  <v-divider class="my-3"></v-divider>
+
+                  <!-- 手动 CA 查询（保留原功能） -->
+                  <div class="text-subtitle-2 mb-2">手动查询其它 CA（本地信任库）</div>
+                  <v-text-field
+                    v-model="caQuery"
+                    label="CA 名称关键词"
+                    variant="outlined"
+                    placeholder="如 CFCA, TrustAsia, BJCA, GlobalSign"
+                    prepend-inner-icon="mdi-magnify"
+                    @click:prepend-inner="searchCA"
+                    :disabled="caLoading"
+                    hide-details="auto"
+                    class="mb-2"
+                  ></v-text-field>
+                  <v-btn
+                    variant="tonal"
+                    color="secondary"
+                    size="small"
+                    @click="searchCA"
+                    :loading="caLoading"
+                  >
+                    <v-icon class="mr-1">mdi-store-search</v-icon>
+                    查询
+                  </v-btn>
+
+                  <!-- CA Results -->
+                  <div v-if="caResults" class="mt-3">
+                    <v-alert
+                      v-if="caResults.status === 'ok'"
+                      :type="caResults.count > 0 ? 'success' : 'info'"
+                      density="compact"
+                      variant="tonal"
+                    >
+                      <template v-slot:title>
+                        找到 {{ caResults.count }} 条匹配记录
+                      </template>
+                    </v-alert>
+                    <v-list v-if="caResults.count > 0" density="compact" lines="two" class="mt-1">
+                      <v-list-item
+                        v-for="(item, i) in caResults.results"
+                        :key="i"
+                        :title="item.subject || item.ca_owner"
+                        :subtitle="`来源: ${item.source} | Mozilla: ${item.mozilla_status || '?'}`"
+                      >
+                        <template v-slot:prepend>
+                          <v-icon color="primary">mdi-certificate-outline</v-icon>
+                        </template>
+                      </v-list-item>
+                    </v-list>
+                  </div>
+                </v-expansion-panel-text>
+              </v-expansion-panel>
+            </v-expansion-panels>
+
+            <!-- 6. 旧威胁诊断信息（最底部，默认收起） -->
+            <v-expansion-panels variant="accordion" class="mb-4">
+              <v-expansion-panel>
+                <v-expansion-panel-title>
+                  <v-icon class="mr-2">mdi-flask-outline</v-icon>
+                  技术细节：证书链逐环分析
+                </v-expansion-panel-title>
+                <v-expansion-panel-text>
+                  <!-- NIST Timeline Visual -->
+                  <div class="mt-2">
+                    <div class="text-caption text-medium-emphasis mb-1">NIST IR 8547 迁移时间线</div>
+                    <div class="nist-timeline-bar">
+                      <div class="segment" style="background: #4caf50; flex: 1;">
+                        2030前 ✓
+                      </div>
+                      <div class="segment" style="background: #ff9800; flex: 1;">
+                        2030-2035 ⚠
+                      </div>
+                      <div class="segment" style="background: #f44336; flex: 1;">
+                        2035后 ✗
+                      </div>
+                    </div>
+                    <div class="d-flex justify-space-between text-caption text-medium-emphasis">
+                      <span>安全线（自然轮换）</span>
+                      <span>过渡期（混合部署）</span>
+                      <span>截止线（必须迁移）</span>
+                    </div>
+                  </div>
+
+                  <v-divider class="my-3"></v-divider>
+
+                  <!-- Overall threat summary -->
+                  <v-row class="text-caption mb-2">
+                    <v-col cols="12" sm="6">
+                      <span class="text-medium-emphasis">整体威胁等级：</span>
+                      <v-chip size="x-small" :color="threatColor(result.overall_threat)" dark label>
+                        <v-icon start size="x-small">{{ threatIcon(result.overall_threat) }}</v-icon>
+                        {{ result.overall_threat_label }}
+                      </v-chip>
+                    </v-col>
+                    <v-col cols="12" sm="6">
+                      <span class="text-medium-emphasis">整体 NIST 阶段：</span>
+                      <v-chip size="x-small" :color="nistColor(result.overall_nist)" dark label>
+                        {{ result.overall_nist_label }}
+                      </v-chip>
+                    </v-col>
+                  </v-row>
+
+                  <!-- Per-certificate detail -->
+                  <v-timeline density="compact" side="end">
+                    <v-timeline-item
+                      v-for="(cert, i) in result.chain"
+                      :key="i"
+                      :dot-color="threatColor(cert.threat)"
+                      :icon="certIcon(i, result.chain_length)"
+                      fill-dot
+                      size="small"
+                    >
+                      <v-card variant="outlined" class="mb-2">
+                        <v-card-item>
+                          <v-card-title class="text-subtitle-2 d-flex align-center">
+                            <v-chip
+                              size="x-small"
+                              :color="certLabelColor(i, result.chain_length)"
+                              class="mr-2"
+                              label
+                            >
+                              {{ certLabel(i, result.chain_length) }}
+                            </v-chip>
+                            证书 #{{ i + 1 }}
+                            <v-chip
+                              size="x-small"
+                              :color="threatColor(cert.threat)"
+                              dark
+                              class="ml-auto"
+                              label
+                            >
+                              {{ cert.threat_label }}
+                            </v-chip>
+                          </v-card-title>
+                        </v-card-item>
+                        <v-card-text>
+                          <v-list density="compact" lines="one">
+                            <v-list-item>
+                              <template v-slot:prepend>
+                                <v-icon size="small" class="mr-1">mdi-account</v-icon>
+                              </template>
+                              <v-list-item-title class="text-body-2">
+                                <span class="text-caption text-medium-emphasis">Subject: </span>
+                                <span class="text-caption">{{ cert.subject }}</span>
+                              </v-list-item-title>
+                            </v-list-item>
+                            <v-list-item>
+                              <template v-slot:prepend>
+                                <v-icon size="small" class="mr-1">mdi-certificate</v-icon>
+                              </template>
+                              <v-list-item-title class="text-body-2">
+                                <span class="text-caption text-medium-emphasis">Issuer: </span>
+                                <span class="text-caption">{{ cert.issuer }}</span>
+                              </v-list-item-title>
+                            </v-list-item>
+                          </v-list>
+
+                          <v-divider class="my-1"></v-divider>
+
+                          <v-row class="text-caption">
+                            <v-col cols="6" sm="3">
+                              <div class="text-medium-emphasis">算法</div>
+                              <v-chip size="x-small" variant="tonal" :color="algoColor(cert.pk_algo)">
+                                {{ cert.pk_algo }}
+                              </v-chip>
+                            </v-col>
+                            <v-col cols="6" sm="3">
+                              <div class="text-medium-emphasis">密钥长度</div>
+                              <div>{{ cert.key_size > 0 ? cert.key_size + ' bit' : 'N/A' }}</div>
+                            </v-col>
+                            <v-col cols="6" sm="3">
+                              <div class="text-medium-emphasis">签名算法</div>
+                              <div class="text-truncate" :title="cert.sig_algo">{{ cert.sig_algo }}</div>
+                            </v-col>
+                            <v-col cols="6" sm="3">
+                              <div class="text-medium-emphasis">NIST 阶段</div>
+                              <v-chip size="x-small" :color="nistColor(cert.nist_phase)" dark label>
+                                {{ cert.nist_label }}
+                              </v-chip>
+                            </v-col>
+                          </v-row>
+
+                          <v-row class="mt-1 text-caption">
+                            <v-col cols="6">
+                              <div class="text-medium-emphasis">生效日期</div>
+                              <div>{{ cert.not_before }}</div>
+                            </v-col>
+                            <v-col cols="6">
+                              <div class="text-medium-emphasis">到期日期</div>
+                              <div>{{ cert.not_after }}</div>
+                            </v-col>
+                          </v-row>
+
+                          <!-- CA Info if matched -->
+                          <v-expand-transition>
+                            <div v-if="cert.ca_info && cert.ca_info.matched" class="mt-2">
+                              <v-alert
+                                :color="cert.ca_info.is_china_ca ? 'teal' : 'info'"
+                                density="compact"
+                                variant="tonal"
+                                class="text-caption"
+                              >
+                                <template v-slot:title>
+                                  <v-icon size="small" class="mr-1">mdi-store</v-icon>
+                                  信任库匹配
+                                  <v-chip
+                                    v-if="cert.ca_info.is_china_ca"
+                                    size="x-small"
+                                    color="teal"
+                                    class="ml-1"
+                                    label
+                                  >中国CA</v-chip>
+                                </template>
+                                <div v-if="cert.ca_info.ca_owner">
+                                  <v-icon size="x-small" class="mr-1">mdi-domain</v-icon>
+                                  {{ cert.ca_info.ca_owner }}
+                                </div>
+                                <div v-if="cert.ca_info.china_ca_detail && cert.ca_info.china_ca_detail.note">
+                                  <v-icon size="x-small" class="mr-1">mdi-information-outline</v-icon>
+                                  {{ cert.ca_info.china_ca_detail.note }}
+                                </div>
+                                <div v-if="cert.ca_info.in_mozilla !== undefined">
+                                  <v-icon size="x-small" class="mr-1">mdi-firefox</v-icon>
+                                  Mozilla: {{ cert.ca_info.in_mozilla ? '✅ 信任' : '❌ 不在/已移除' }}
+                                  <span class="text-caption ml-1">({{ cert.ca_info.mozilla_status }})</span>
+                                </div>
+                                <div v-if="cert.ca_info.chrome_status">
+                                  <v-icon size="x-small" class="mr-1">mdi-google-chrome</v-icon>
+                                  Chrome: {{ cert.ca_info.chrome_status }}
+                                </div>
+                                <div v-if="cert.ca_info.ms_status">
+                                  <v-icon size="x-small" class="mr-1">mdi-microsoft-windows</v-icon>
+                                  MS: {{ cert.ca_info.ms_status }}
+                                </div>
+                                <div v-if="cert.ca_info.not_after">
+                                  <v-icon size="x-small" class="mr-1">mdi-calendar-expiry</v-icon>
+                                  根证书到期: {{ cert.ca_info.not_after }}
+                                </div>
+                              </v-alert>
+                            </div>
+                          </v-expand-transition>
+                        </v-card-text>
+                      </v-card>
+                    </v-timeline-item>
+                  </v-timeline>
+
+                  <!-- Old migration advice -->
+                  <div class="text-subtitle-2 mt-2 mb-2">
+                    <v-icon size="small" class="mr-1">mdi-lightbulb-on-outline</v-icon>
+                    旧版威胁诊断建议
+                  </div>
+                  <div v-for="(advice, i) in result.advice" :key="i" class="advice-item mb-2">
+                    <v-icon
+                      size="small"
+                      :color="advice.startsWith('✅') ? 'success' : advice.startsWith('⚠️') ? 'warning' : advice.startsWith('❌') ? 'error' : 'info'"
+                      class="mr-1"
+                    >
+                      {{ advice.startsWith('✅') ? 'mdi-check-circle' : advice.startsWith('⚠️') ? 'mdi-alert' : advice.startsWith('❌') ? 'mdi-close-circle' : 'mdi-information' }}
+                    </v-icon>
+                    <span class="text-body-2">{{ advice }}</span>
+                  </div>
+                </v-expansion-panel-text>
+              </v-expansion-panel>
+            </v-expansion-panels>
+          </template>
+
+          <!-- Empty State -->
+          <v-card
+            v-if="!result && !loading && !error"
+            variant="outlined"
+            class="text-center pa-8"
+          >
+            <v-icon size="64" color="grey-lighten-1">mdi-certificate-outline</v-icon>
+            <div class="text-h6 text-grey mt-4">输入域名获取续费指南</div>
+            <div class="text-body-2 text-grey mt-1">
+              查看证书到期时间、签发 CA 的 PQC 就绪度，以及续费时的行动建议
+            </div>
+          </v-card>
+
+          <!-- Info Cards Section -->
+          <v-row class="mt-2 mb-4">
+            <v-col cols="12" sm="4">
+              <v-card variant="tonal" color="info">
+                <v-card-text class="text-center">
+                  <v-icon size="32" class="mb-1">mdi-alert-octagon</v-icon>
+                  <div class="text-caption">
+                    RSA/ECC 受 Shor 算法威胁<br />
+                    <span class="text-medium-emphasis">量子计算机可指数级加速破解</span>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+            <v-col cols="12" sm="4">
+              <v-card variant="tonal" color="success">
+                <v-card-text class="text-center">
+                  <v-icon size="32" class="mb-1">mdi-calendar-check</v-icon>
+                  <div class="text-caption">
+                    NIST 2030/2035 截止线<br />
+                    <span class="text-medium-emphasis">2030 前自然轮换，2035 后必须迁移</span>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+            <v-col cols="12" sm="4">
+              <v-card variant="tonal" color="warning">
+                <v-card-text class="text-center">
+                  <v-icon size="32" class="mb-1">mdi-transit-connection-variant</v-icon>
+                  <div class="text-caption">
+                    PQC 混合证书<br />
+                    <span class="text-medium-emphasis">传统 + 量子安全双证书部署</span>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-container>
+      </v-main>
+
+      <!-- Footer -->
+      <v-footer class="bg-grey-lighten-3 pa-4" app>
+        <v-container fluid style="max-width: 960px;">
+          <div class="footer-text">
+            <div>
+              本项目 中山大学 网络空间安全学院 |
+              数据来源: Mozilla CCADB / 内置 CA PQC 就绪度
+            </div>
+            <div class="mt-1">
+              <v-icon size="small" class="mr-1">mdi-github</v-icon>
+              大创项目 - 方向一: TLS 证书续费 PQC 升级指南
+            </div>
+          </div>
+        </v-container>
+      </v-footer>
+    </v-app>
+  </div>
+
+  <!-- Vue 3 -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <!-- Vuetify 3 -->
+  <script src="https://unpkg.com/vuetify@3/dist/vuetify.min.js"></script>
+
+  <script>
+    const { createApp, ref, reactive } = Vue;
+    const { createVuetify } = Vuetify;
+
+    // Vuetify 3 with Chinese language
+    const vuetify = createVuetify({
+      locale: {
+        locale: 'zh-CN',
+        fallback: 'zh-CN',
+        messages: {
+          'zh-CN': {
+            badge: '徽章',
+            close: '关闭',
+            copy: '复制',
+            edit: '编辑',
+            loading: '加载中...',
+            more: '更多',
+          }
+        }
+      },
+      icons: {
+        defaultSet: 'mdi',
+      },
+      theme: {
+        defaultTheme: 'light',
+        themes: {
+          light: {
+            colors: {
+              primary: '#1565C0',
+              secondary: '#6A1B9A',
+              accent: '#00BCD4',
+              error: '#D32F2F',
+              info: '#1976D2',
+              success: '#388E3C',
+              warning: '#F57C00',
+            }
+          }
+        }
+      }
+    });
+
+    const app = createApp({
+      setup() {
+        const domain = ref('');
+        const loading = ref(false);
+        const error = ref('');
+        const result = ref(null);
+        const caQuery = ref('');
+        const caLoading = ref(false);
+        const caResults = ref(null);
+
+        // Scan function
+        async function scan() {
+          if (!domain.value) return;
+          loading.value = true;
+          error.value = '';
+          result.value = null;
+          caResults.value = null;
+
+          try {
+            const resp = await fetch(`/api/scan?domain=${encodeURIComponent(domain.value)}`);
+            const data = await resp.json();
+            if (data.status === 'error') {
+              error.value = data.error || '扫描失败，请检查域名';
+            } else {
+              result.value = data;
+            }
+          } catch (e) {
+            error.value = '网络错误: ' + (e.message || e);
+          } finally {
+            loading.value = false;
+          }
+        }
+
+        // Search CA in trust store
+        async function searchCA() {
+          if (!caQuery.value) return;
+          caLoading.value = true;
+          caResults.value = null;
+
+          try {
+            const resp = await fetch(`/api/trust-store?ca=${encodeURIComponent(caQuery.value)}`);
+            const data = await resp.json();
+            caResults.value = data;
+          } catch (e) {
+            caResults.value = { status: 'error', count: 0, results: [], error: e.message };
+          } finally {
+            caLoading.value = false;
+          }
+        }
+
+        // ---- Renewal guide helpers ----
+
+        // Countdown color: <2030 green, 2030-2035 orange/yellow, >2035 red
+        function countdownStyle(expiryYear) {
+          if (expiryYear === null || expiryYear === undefined) return { color: '#757575' };
+          if (expiryYear < 2030) return { color: '#2E7D32' };
+          if (expiryYear <= 2035) return { color: '#F57F17' };
+          return { color: '#C62828' };
+        }
+
+        function countdownChip(expiryYear) {
+          if (expiryYear === null || expiryYear === undefined) return 'grey';
+          if (expiryYear < 2030) return 'success';
+          if (expiryYear <= 2035) return 'warning';
+          return 'error';
+        }
+
+        function countdownSentence(overview) {
+          if (!overview || !overview.expiry_year) return '无法确定到期时间，请手动检查证书。';
+          const date = overview.not_after || '未知日期';
+          const y = overview.expiry_year;
+          if (y < 2030) {
+            return `你的证书将在 ${date} 到期。剩余时间充足，可以利用下次续费自然轮换到 PQC 证书，选择窗口十分宽裕。`;
+          }
+          if (y <= 2035) {
+            return `你的证书将在 ${date} 到期。到期时正处于 NIST 迁移过渡期（2030-2035），如果现在不规划 PQC 迁移，到时的选择窗口将会收窄，建议尽早准备混合证书方案。`;
+          }
+          return `你的证书将在 ${date} 到期。它跨越了 NIST 2035 截止线，届时不会自然轮换——如果现在不规划 PQC 迁移，到时的选择窗口将会非常被动，必须立即启动迁移评估。`;
+        }
+
+        // CA PQC status: True -> 🟢, null -> 🟡, False -> 🔴
+        function pqcStatus(hasPqcRoot) {
+          if (hasPqcRoot === true) return { emoji: '🟢', text: '已支持 PQC', color: 'success' };
+          if (hasPqcRoot === false) return { emoji: '🔴', text: '尚无 PQC', color: 'error' };
+          return { emoji: '🟡', text: '部分支持 / 情况未知', color: 'warning' };
+        }
+
+        function pqcSentence(readiness) {
+          const ca = readiness.ca_name || '你的 CA';
+          if (readiness.has_pqc_root === true) {
+            return `${ca} 目前已支持 PQC 证书签发。你可以在续费时直接要求 PQC 混合证书。`;
+          }
+          if (readiness.has_pqc_root === false) {
+            return `${ca} 目前尚不支持 PQC 证书签发。你可以在续费时询问其 PQC 路线图，或评估更换 CA。`;
+          }
+          return `${ca} 的 PQC 支持情况暂未公开，建议在续费前直接咨询确认。`;
+        }
+
+        function urgencyInfo(advice) {
+          if (!advice) return { color: 'grey', icon: 'mdi-help-circle', title: '无法评估' };
+          const map = {
+            low:    { color: 'success', icon: 'mdi-check-circle',     title: '紧迫度：低（自然轮换即可）' },
+            medium: { color: 'warning', icon: 'mdi-alert',            title: '紧迫度：中（过渡期内需规划迁移）' },
+            high:   { color: 'error',   icon: 'mdi-alert-octagon',    title: '紧迫度：高（跨越 2035 截止线）' },
+            unknown:{ color: 'grey',    icon: 'mdi-help-circle',      title: '紧迫度：未知' },
+          };
+          return map[advice.urgency] || map.unknown;
+        }
+
+        function nistLine(overallNist) {
+          const map = {
+            PRE2030: '2030前到期 → 自然轮换即可',
+            DURING2030: '2030-2035 到期 → 过渡期需规划迁移',
+            POST2035: '跨越 NIST 2035 截止线 → 不会自然轮换',
+            UNKNOWN: '未知',
+          };
+          return map[overallNist] || overallNist;
+        }
+
+        function expiryYearMonth(notAfter) {
+          if (!notAfter) return '未知';
+          const m = String(notAfter).match(/^(\d{4})-(\d{2})/);
+          if (m) return `${parseInt(m[1])}年${parseInt(m[2])}月`;
+          return notAfter;
+        }
+
+        function trustStatusLabel(status) {
+          const s = String(status || 'Unknown').toLowerCase();
+          if (s.includes('included') || s.includes('信任') || s.includes('in') ) return '✅ ' + status;
+          if (s.includes('not included') || s.includes('removed') || s.includes('excluded')) return '❌ ' + status;
+          return status || '?';
+        }
+
+        // ---- Legacy helpers (technical details) ----
+        function threatColor(threat) {
+          const map = {
+            'THREAT_NONE': 'success',
+            'THREAT_GROVER': 'warning',
+            'THREAT_SHOR': 'error',
+            'THREAT_CRITICAL': 'deep-red darken-2',
+          };
+          return map[threat] || 'grey';
+        }
+
+        function threatIcon(threat) {
+          const map = {
+            'THREAT_NONE': 'mdi-shield-check',
+            'THREAT_GROVER': 'mdi-shield-alert',
+            'THREAT_SHOR': 'mdi-shield-off',
+            'THREAT_CRITICAL': 'mdi-skull-crossbones',
+          };
+          return map[threat] || 'mdi-help-circle';
+        }
+
+        function nistColor(phase) {
+          const map = {
+            'PRE2030': 'success',
+            'DURING2030': 'warning',
+            'POST2035': 'error',
+            'UNKNOWN': 'grey',
+          };
+          return map[phase] || 'grey';
+        }
+
+        function algoColor(algo) {
+          const map = {
+            'RSA': 'purple',
+            'ECC': 'indigo',
+            'SM2': 'teal',
+            'DILITHIUM': 'green',
+            'FALCON': 'green',
+            'SPHINCS+': 'green',
+            'KYBER': 'green',
+            'ML-KEM': 'green',
+            'ML-DSA': 'green',
+            'SLH-DSA': 'green',
+            'ED25519': 'orange',
+            'ED448': 'orange',
+            'X25519': 'orange',
+            'X448': 'orange',
+          };
+          return map[algo] || 'blue-grey';
+        }
+
+        function certLabel(index, length) {
+          if (index === 0) return '叶子';
+          if (index === length - 1) return '根';
+          return '中间';
+        }
+
+        function certLabelColor(index, length) {
+          if (index === 0) return 'success';
+          if (index === length - 1) return 'primary';
+          return 'warning';
+        }
+
+        function certIcon(index, length) {
+          if (index === 0) return 'mdi-leaf';
+          if (index === length - 1) return 'mdi-tree';
+          return 'mdi-arrow-up-bold-circle';
+        }
+
+        return {
+          domain,
+          loading,
+          error,
+          result,
+          caQuery,
+          caLoading,
+          caResults,
+          scan,
+          searchCA,
+          countdownStyle,
+          countdownChip,
+          countdownSentence,
+          pqcStatus,
+          pqcSentence,
+          urgencyInfo,
+          nistLine,
+          expiryYearMonth,
+          trustStatusLabel,
+          threatColor,
+          threatIcon,
+          nistColor,
+          algoColor,
+          certLabel,
+          certLabelColor,
+          certIcon,
+        };
+      }
+    });
+
+    app.use(vuetify);
+    app.mount('#app');
+  </script>
+</body>
+</html>
