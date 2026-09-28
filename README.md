@@ -31,8 +31,8 @@
 # 1) 编译威胁判定引擎
 cd tool && make && make check   # 112 项单元测试
 
-# 2) 扫描一个域名的证书链
-python3 tool/scan_tls_chains.py example.com
+# 2) 扫描一批域名的证书链
+python3 tool/scan_tls_chains.py --list domains.txt --outdir data/chains
 
 # 3) 复跑 SPHINCS+ 基准（需 gcc，约 30 分钟）
 cd benchmark && ./run_all.sh && cat logs/sphincs-sha2-128f.log
